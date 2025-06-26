@@ -394,7 +394,7 @@ def create_ui():
             for component in compute_inputs:
                 event = component.release if isinstance(component, gr.Slider) else component.change
                 event(
-                    fn=wrap_gradio_call(estimate_compute),
+                    fn=estimate_compute,
                     inputs=compute_inputs,
                     outputs=[compute_info],
                     show_progress=False,
@@ -747,7 +747,7 @@ def create_ui():
             for component in compute_inputs2:
                 event = component.release if isinstance(component, gr.Slider) else component.change
                 event(
-                    fn=wrap_gradio_call(estimate_compute),
+                    fn=estimate_compute,
                     inputs=compute_inputs2,
                     outputs=[compute_info2],
                     show_progress=False,
