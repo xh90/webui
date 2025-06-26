@@ -327,3 +327,12 @@ class ExtensionItem(BaseModel):
     version: str = Field(title="Version", description="Extension Version")
     commit_date: str = Field(title="Commit Date", description="Extension Repository Commit Date")
     enabled: bool = Field(title="Enabled", description="Flag specifying whether this extension is enabled")
+
+class ComputeEstimateRequest(BaseModel):
+    width: int
+    height: int
+    batch_size: int = 1
+    batch_count: int = 1
+
+class ComputeEstimateResponse(BaseModel):
+    compute: float

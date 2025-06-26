@@ -239,6 +239,7 @@ class Api:
         self.add_api_route("/sdapi/v1/train/embedding", self.train_embedding, methods=["POST"], response_model=models.TrainResponse)
         self.add_api_route("/sdapi/v1/train/hypernetwork", self.train_hypernetwork, methods=["POST"], response_model=models.TrainResponse)
         self.add_api_route("/sdapi/v1/memory", self.get_memory, methods=["GET"], response_model=models.MemoryResponse)
+        self.add_api_route("/sdapi/v1/estimate-compute", self.estimate_compute, methods=["POST"], response_model=models.ComputeEstimateResponse)
         self.add_api_route("/sdapi/v1/unload-checkpoint", self.unloadapi, methods=["POST"])
         self.add_api_route("/sdapi/v1/reload-checkpoint", self.reloadapi, methods=["POST"])
         self.add_api_route("/sdapi/v1/scripts", self.get_scripts_list, methods=["GET"], response_model=models.ScriptsList)
@@ -882,6 +883,11 @@ class Api:
         except Exception as err:
             cuda = {'error': f'{err}'}
         return models.MemoryResponse(ram=ram, cuda=cuda)
+
+    def estimate_compute(self, req: models.ComputeEstimateRequest):
+        compute = ui.estimate_compute(req.width, req.height, req.batch_size, req.batch_count)
+        return models.ComputeEstimateResponse(compute=compute)
+
 
     def get_extensions_list(self):
         from modules import extensions
