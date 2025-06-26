@@ -190,6 +190,18 @@ def update_negative_prompt_token_counter(*args):
     return update_token_counter(*args, is_positive=False)
 
 
+def estimate_compute(width, height, batch_size, batch_count):
+    params = {
+        "width": width,
+        "height": height,
+        "batch_size": batch_size,
+        "batch_count": batch_count,
+    }
+    print(f"Estimate compute parameters: {params}")
+    compute = width * height * batch_size * batch_count / (1024 * 768)
+    return round(compute, 2)
+
+
 def setup_progressbar(*args, **kwargs):
     pass
 
@@ -297,6 +309,7 @@ def create_ui():
                                 with gr.Column(elem_id="txt2img_column_batch"):
                                     batch_count = gr.Slider(minimum=1, step=1, label='Batch count', value=1, elem_id="txt2img_batch_count")
                                     batch_size = gr.Slider(minimum=1, maximum=8, step=1, label='Batch size', value=1, elem_id="txt2img_batch_size")
+                                    compute_info = gr.Number(label='Compute estimate', value=0, interactive=False, elem_id="txt2img_compute")
 
                     elif category == "cfg":
                         with gr.Row():
@@ -345,6 +358,7 @@ def create_ui():
                             with FormRow(elem_id="txt2img_column_batch"):
                                 batch_count = gr.Slider(minimum=1, step=1, label='Batch count', value=1, elem_id="txt2img_batch_count")
                                 batch_size = gr.Slider(minimum=1, maximum=8, step=1, label='Batch size', value=1, elem_id="txt2img_batch_size")
+                                compute_info = gr.Number(label='Compute estimate', value=0, interactive=False, elem_id="txt2img_compute")
 
                     elif category == "override_settings":
                         with FormRow(elem_id="txt2img_override_settings_row") as row:
@@ -373,6 +387,16 @@ def create_ui():
                     _js="onCalcResolutionHires",
                     inputs=hr_resolution_preview_inputs,
                     outputs=[],
+                    show_progress=False,
+                )
+
+            compute_inputs = [width, height, batch_size, batch_count]
+            for component in compute_inputs:
+                event = component.release if isinstance(component, gr.Slider) else component.change
+                event(
+                    fn=estimate_compute,
+                    inputs=compute_inputs,
+                    outputs=[compute_info],
                     show_progress=False,
                 )
 
@@ -658,6 +682,7 @@ def create_ui():
                                 with gr.Column(elem_id="img2img_column_batch"):
                                     batch_count = gr.Slider(minimum=1, step=1, label='Batch count', value=1, elem_id="img2img_batch_count")
                                     batch_size = gr.Slider(minimum=1, maximum=8, step=1, label='Batch size', value=1, elem_id="img2img_batch_size")
+                                    compute_info2 = gr.Number(label='Compute estimate', value=0, interactive=False, elem_id="img2img_compute")
 
                     elif category == "denoising":
                         denoising_strength = gr.Slider(minimum=0.0, maximum=1.0, step=0.01, label='Denoising strength', value=0.75, elem_id="img2img_denoising_strength")
@@ -680,6 +705,7 @@ def create_ui():
                             with FormRow(elem_id="img2img_column_batch"):
                                 batch_count = gr.Slider(minimum=1, step=1, label='Batch count', value=1, elem_id="img2img_batch_count")
                                 batch_size = gr.Slider(minimum=1, maximum=8, step=1, label='Batch size', value=1, elem_id="img2img_batch_size")
+                                compute_info2 = gr.Number(label='Compute estimate', value=0, interactive=False, elem_id="img2img_compute")
 
                     elif category == "override_settings":
                         with FormRow(elem_id="img2img_override_settings_row") as row:
@@ -716,6 +742,16 @@ def create_ui():
             # I assume this must be a gradio bug and for now we'll just do it for non-inpaint inputs.
             for component in [init_img, sketch]:
                 component.change(fn=lambda: None, _js="updateImg2imgResizeToTextAfterChangingImage", inputs=[], outputs=[], show_progress=False)
+
+            compute_inputs2 = [width, height, batch_size, batch_count]
+            for component in compute_inputs2:
+                event = component.release if isinstance(component, gr.Slider) else component.change
+                event(
+                    fn=estimate_compute,
+                    inputs=compute_inputs2,
+                    outputs=[compute_info2],
+                    show_progress=False,
+                )
 
             def select_img2img_tab(tab):
                 return gr.update(visible=tab in [2, 3, 4]), gr.update(visible=tab == 3),
