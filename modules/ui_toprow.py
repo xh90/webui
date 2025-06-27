@@ -92,6 +92,18 @@ class Toprow:
             outputs=[self.prompt, self.prompt_img],
             show_progress=False,
         )
+    
+    def attach_compute_info(self, compute_info: gr.Number):
+        def update_button_text(score):
+            return f"生成 ({score:.2f})" if score is not None else "生成 (-)"
+
+        compute_info.change(
+            fn=update_button_text,
+            inputs=[compute_info],
+            outputs=[self.submit],
+            show_progress=False
+        )
+
 
     def create_submit_box(self):
         with gr.Row(elem_id=f"{self.id_part}_generate_box", elem_classes=["generate-box"] + (["generate-box-compact"] if self.is_compact else []), render=not self.is_compact) as submit_box:

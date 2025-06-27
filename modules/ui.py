@@ -321,7 +321,8 @@ def create_ui():
                                 with gr.Column(elem_id="txt2img_column_batch"):
                                     batch_count = gr.Slider(minimum=1, step=1, label='Batch count', value=1, elem_id="txt2img_batch_count")
                                     batch_size = gr.Slider(minimum=1, maximum=8, step=1, label='Batch size', value=1, elem_id="txt2img_batch_size")
-                                    compute_info = gr.Number(label='Compute estimate', value=0, interactive=False, elem_id="txt2img_compute")
+                                    # compute_info = gr.Number(label='Compute estimate', value=0, interactive=False, elem_id="txt2img_compute")
+                                    toprow.attach_compute_info(compute_info)
 
                     elif category == "cfg":
                         with gr.Row():
@@ -370,7 +371,8 @@ def create_ui():
                             with FormRow(elem_id="txt2img_column_batch"):
                                 batch_count = gr.Slider(minimum=1, step=1, label='Batch count', value=1, elem_id="txt2img_batch_count")
                                 batch_size = gr.Slider(minimum=1, maximum=8, step=1, label='Batch size', value=1, elem_id="txt2img_batch_size")
-                                compute_info = gr.Number(label='Compute estimate', value=0, interactive=False, elem_id="txt2img_compute")
+                                # compute_info = gr.Number(label='Compute estimate', value=0, interactive=False, elem_id="txt2img_compute")
+                                # toprow.attach_compute_info(compute_info)
 
                     elif category == "override_settings":
                         with FormRow(elem_id="txt2img_override_settings_row") as row:
@@ -693,7 +695,8 @@ def create_ui():
                                 with gr.Column(elem_id="img2img_column_batch"):
                                     batch_count = gr.Slider(minimum=1, step=1, label='Batch count', value=1, elem_id="img2img_batch_count")
                                     batch_size = gr.Slider(minimum=1, maximum=8, step=1, label='Batch size', value=1, elem_id="img2img_batch_size")
-                                    compute_info2 = gr.Number(label='Compute estimate', value=0, interactive=False, elem_id="img2img_compute")
+                                    # compute_info2 = gr.Number(label='Compute estimate', value=0, interactive=False, elem_id="img2img_compute")
+                                    toprow.attach_compute_info(compute_info2)
 
                     elif category == "denoising":
                         denoising_strength = gr.Slider(minimum=0.0, maximum=1.0, step=0.01, label='Denoising strength', value=0.75, elem_id="img2img_denoising_strength")
@@ -716,7 +719,7 @@ def create_ui():
                             with FormRow(elem_id="img2img_column_batch"):
                                 batch_count = gr.Slider(minimum=1, step=1, label='Batch count', value=1, elem_id="img2img_batch_count")
                                 batch_size = gr.Slider(minimum=1, maximum=8, step=1, label='Batch size', value=1, elem_id="img2img_batch_size")
-                                compute_info2 = gr.Number(label='Compute estimate', value=0, interactive=False, elem_id="img2img_compute")
+                                # compute_info2 = gr.Number(label='Compute estimate', value=0, interactive=False, elem_id="img2img_compute")
 
                     elif category == "override_settings":
                         with FormRow(elem_id="img2img_override_settings_row") as row:
