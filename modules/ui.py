@@ -189,6 +189,18 @@ def update_token_counter(text, steps, styles, *, is_positive=True):
 def update_negative_prompt_token_counter(*args):
     return update_token_counter(*args, is_positive=False)
 
+def unwrap_result(f):
+    def wrapped(*args, **kwargs):
+        res = f(*args, **kwargs)  # 调用 wrap_gradio_call(...)
+        # 期望它返回的是 ([float],) 这种形式
+        if isinstance(res, tuple) and len(res) == 1:
+            val = res[0]
+            if isinstance(val, list) and len(val) == 1:
+                return val[0]
+            else:
+                return val
+        return res
+    return wrapped
 
 def estimate_compute(width, height, batch_size, batch_count):
     params = {
@@ -199,7 +211,7 @@ def estimate_compute(width, height, batch_size, batch_count):
     }
     print(f"Estimate compute parameters: {params}")
     compute = width * height * batch_size * batch_count / (1024 * 768)
-    return round(compute, 2)
+    return [round(compute, 2)]
 
 
 def setup_progressbar(*args, **kwargs):
@@ -291,7 +303,7 @@ def create_ui():
                 stack.enter_context(gr.Column(variant='compact', elem_id="txt2img_settings"))
 
                 scripts.scripts_txt2img.prepare_ui()
-
+                compute_info = gr.Number(label='Compute estimate', value=0, interactive=False, visible=False)
                 for category in ordered_ui_categories():
                     if category == "prompt":
                         toprow.create_inline_toprow_prompts()
@@ -394,12 +406,11 @@ def create_ui():
             for component in compute_inputs:
                 event = component.release if isinstance(component, gr.Slider) else component.change
                 event(
-                    fn=wrap_gradio_call(estimate_compute),
+                    fn=unwrap_result(wrap_gradio_call(lambda *args: estimate_compute(*args))),
                     inputs=compute_inputs,
-                    outputs=[compute_info],
+                    outputs=compute_info,
                     show_progress=False,
                 )
-
             output_panel = create_output_panel("txt2img", opts.outdir_txt2img_samples, toprow)
 
             txt2img_inputs = [
@@ -552,7 +563,7 @@ def create_ui():
                             copy_image_buttons.append((button, name, elem))
 
                 scripts.scripts_img2img.prepare_ui()
-
+                compute_info2 = gr.Number(label='Compute estimate', value=0, interactive=False, visible=False)
                 for category in ordered_ui_categories():
                     if category == "prompt":
                         toprow.create_inline_toprow_prompts()
@@ -747,9 +758,9 @@ def create_ui():
             for component in compute_inputs2:
                 event = component.release if isinstance(component, gr.Slider) else component.change
                 event(
-                    fn=wrap_gradio_call(estimate_compute),
+                    fn=unwrap_result(wrap_gradio_call(lambda *args: estimate_compute(*args))),
                     inputs=compute_inputs2,
-                    outputs=[compute_info2],
+                    outputs=compute_info2,
                     show_progress=False,
                 )
 
