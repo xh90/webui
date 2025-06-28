@@ -5,6 +5,12 @@ import time
 
 from modules import shared, progress, errors, devices, fifo_lock, profiling
 
+import io
+import json
+import requests
+from PIL import Image
+from fastapi.encoders import jsonable_encoder
+
 queue_lock = fifo_lock.FIFOLock()
 
 
@@ -21,9 +27,7 @@ def wrap_queued_call(func):
 def wrap_gradio_gpu_call(func, extra_outputs=None):
     @wraps(func)
     def f(*args, **kwargs):
-
-        # if the first argument is a string that says "task(...)", it is treated as a job id
-        if args and type(args[0]) == str and args[0].startswith("task(") and args[0].endswith(")"):
+        if args and isinstance(args[0], str) and args[0].startswith("task(") and args[0].endswith(")"):
             id_task = args[0]
             progress.add_task_to_queue(id_task)
         else:
@@ -32,9 +36,54 @@ def wrap_gradio_gpu_call(func, extra_outputs=None):
         with queue_lock:
             shared.state.begin(job=id_task)
             progress.start_task(id_task)
-
             try:
                 res = func(*args, **kwargs)
+                print(res)
+
+                # --- 提交历史到远程接口 ---
+                try:
+                    # 多图像处理
+                    image_files = []
+                    if isinstance(res, (list, tuple)) and isinstance(res[0], list):
+                        for idx, img in enumerate(res[0]):
+                            if isinstance(img, Image.Image):
+                                buf = io.BytesIO()
+                                img.save(buf, format="PNG")
+                                buf.seek(0)
+                                image_files.append(("image", (f"{id_task}_{idx}.png", buf, "image/png")))
+
+                    # 提取非图像部分（保留 res[1:]）
+                    try:
+                        rest = res[1:]  # 结构化数据、HTML等
+                        result_dict = {
+                            "meta": rest[0] if len(rest) > 0 else None,
+                            "html": rest[1] if len(rest) > 1 else None,
+                            "comments": rest[2] if len(rest) > 2 else None
+                        }
+                    except Exception as e:
+                        result_dict = {"error": "结果解析失败", "detail": str(e)}
+
+                    # 构造 multipart 请求
+                    data = {
+                        "id_task": id_task or "unknown_task",
+                        "result": json.dumps(result_dict, ensure_ascii=False)
+                    }
+
+                    response = requests.post(
+                        "http://comfyui.fireai.cn:8190/api/webui/history",
+                        data=data,
+                        files=image_files,
+                        timeout=10
+                    )
+
+                    if response.status_code != 200:
+                        print(f"[History] 上传失败: {response.status_code} - {response.text}")
+                    else:
+                        print("[History] 上传成功")
+                except Exception as e:
+                    print(f"[History] 上传异常: {e}")
+
+                # 记录结果
                 progress.record_results(id_task, res)
             finally:
                 progress.finish_task(id_task)
