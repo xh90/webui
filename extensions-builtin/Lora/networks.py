@@ -3,7 +3,7 @@ import gradio as gr
 import logging
 import os
 import re
-
+import requests
 import lora_patches
 import network
 import network_lora
@@ -648,18 +648,54 @@ def network_MultiheadAttention_load_state_dict(self, *args, **kwargs):
 
 
 def process_network_files(names: list[str] | None = None):
+    # 1. 获取远程 loras 模型列表
+    try:
+        resp = requests.get("http://comfyui.fireai.cn:8190/api/models?folder=loras", timeout=10)
+        resp.raise_for_status()
+        remote_files = resp.json().get("files", [])
+    except Exception as e:
+        print("[LoRA] 网络不可达，跳过远程模型下载")
+        remote_files = []
+
+    # 2. 本地已有模型文件名集合（不含扩展名）
+    local_candidates = list(shared.walk_files(shared.cmd_opts.lora_dir, allowed_extensions=[".pt", ".ckpt", ".safetensors"]))
+    local_names = {os.path.splitext(os.path.basename(f))[0] for f in local_candidates}
+
+    # 3. 下载缺失模型到 shared.cmd_opts.lora_dir
+    for remote_file in remote_files:
+        name_no_ext = os.path.splitext(remote_file)[0]
+        if names and name_no_ext not in names:
+            continue
+        if name_no_ext in local_names:
+            continue
+        try:
+            download_url = f"http://comfyui.fireai.cn:8190/api/model?folder=loras&filename={remote_file}"
+            save_path = os.path.join(shared.cmd_opts.lora_dir, remote_file)
+            with requests.get(download_url, stream=True, timeout=30) as r:
+                r.raise_for_status()
+                os.makedirs(os.path.dirname(save_path), exist_ok=True)
+                with open(save_path, "wb") as f:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        if chunk:
+                            f.write(chunk)
+            print(f"[LoRA] 下载模型: {remote_file}")
+        except Exception as e:
+            errors.report(f"下载模型失败: {remote_file}", exc_info=True)
+
+    # 4. 重新列举包括下载后的本地文件
     candidates = list(shared.walk_files(shared.cmd_opts.lora_dir, allowed_extensions=[".pt", ".ckpt", ".safetensors"]))
     candidates += list(shared.walk_files(shared.cmd_opts.lyco_dir_backcompat, allowed_extensions=[".pt", ".ckpt", ".safetensors"]))
+
+    # 5. 正常处理逻辑
     for filename in candidates:
         if os.path.isdir(filename):
             continue
         name = os.path.splitext(os.path.basename(filename))[0]
-        # if names is provided, only load networks with names in the list
         if names and name not in names:
             continue
         try:
             entry = network.NetworkOnDisk(name, filename)
-        except OSError:  # should catch FileNotFoundError and PermissionError etc.
+        except OSError:
             errors.report(f"Failed to load network {name} from {filename}", exc_info=True)
             continue
 
