@@ -263,11 +263,49 @@ function setupResolutionPasting(tabname) {
     }
 }
 
+function get_compute_estimate() {
+    const button = gradioApp().querySelector('#txt2img_generate');
+    console.log(button.textContent)
+    if (!button) {
+        console.warn("未找到按钮");
+        return 0;
+    }
+    const match = button.textContent.match(/\(([\d.]+)\)/);
+    if (!match) {
+        console.warn("未匹配到分数");
+        return 0;
+    }
+    const estimate = parseFloat(match[1]);
+    if (!isNaN(estimate)) {
+        console.log("[get_compute_estimate] 计算结果:", estimate);
+    }
+    return estimate;
+}
+
 onUiLoaded(function() {
     showRestoreProgressButton('txt2img', localGet("txt2img_task_id"));
     showRestoreProgressButton('img2img', localGet("img2img_task_id"));
     setupResolutionPasting('txt2img');
     setupResolutionPasting('img2img');
+    // 通知父窗口：我准备好了
+    window.parent.postMessage({ type: 'ready' }, '*');
+    //页面加载完成后监听父窗口发送的消息
+    window.addEventListener('message', (event) => {
+        // if (event.origin !== 'https://projectA.domain') return;
+        console.log(event.data)
+        switch (event.data.type) {
+            // case 'runOK':
+            //     initializeApp(event.data.data);
+            //     break;
+            case 'estimateOK':
+                window.parent.postMessage({ type: event.data.value=='before'? 'estimate_before' : 'estimate_value',value:get_compute_estimate() }, '*');
+                break;
+            case 'runOK':
+                gradioApp().querySelector('#txt2img_generate').click();
+                break;
+            // 其他指令
+        }
+    });
 });
 
 
