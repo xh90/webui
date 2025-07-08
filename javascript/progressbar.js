@@ -124,6 +124,7 @@ function requestProgress(id_task, progressbarContainer, gallery, atEnd, onProgre
         requestWakeLock();
         request("./internal/progress", {id_task: id_task, live_preview: false}, function(res) {
             if (res.completed) {
+                sent_is_completed();//向上级页面发送已完成信号
                 removeProgressBar();
                 return;
             }

@@ -95,7 +95,7 @@ class Toprow:
     
     def attach_compute_info(self, compute_info: gr.Number):
         def update_button_text(score):
-            return f"生成 ({score:.2f})" if score is not None else "生成 (-)"
+            return f"生成 ({score:.2f})" if score is not None else "生成 (10.00)"
 
         compute_info.change(
             fn=update_button_text,

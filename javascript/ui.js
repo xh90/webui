@@ -264,7 +264,7 @@ function setupResolutionPasting(tabname) {
 }
 
 function get_compute_estimate() {
-    const button = gradioApp().querySelector('#txt2img_generate');
+    const button = gradioApp().querySelector(get_tab_index('tabs')==0?'#txt2img_generate':'#img2img_generate');//根据文生图还是图生图判断算力
     console.log(button.textContent)
     if (!button) {
         console.warn("未找到按钮");
@@ -282,13 +282,32 @@ function get_compute_estimate() {
     return estimate;
 }
 
+// 发送已完成信号给父窗口
+function sent_is_completed(){
+    window.parent.postMessage({ type: 'estimate_done',value:'' }, '*');
+}
+
 onUiLoaded(function() {
     showRestoreProgressButton('txt2img', localGet("txt2img_task_id"));
     showRestoreProgressButton('img2img', localGet("img2img_task_id"));
     setupResolutionPasting('txt2img');
     setupResolutionPasting('img2img');
+
+    // const sliderInput = gradioApp().querySelector('#txt2img_batch_size input');
+    // if (sliderInput) {
+    //     const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+    //     nativeInputValueSetter.call(sliderInput, 0);
+    //     nativeInputValueSetter.call(sliderInput, 1);
+    //     sliderInput.dispatchEvent(new Event('input', { bubbles: true }));
+    //     sliderInput.dispatchEvent(new Event('change', { bubbles: true }));
+    //     // 关键：模拟 release（触发 gr.Slider 的 .release 事件）
+    //     sliderInput.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
+    //     sliderInput.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+    // }
+
     // 通知父窗口：我准备好了
     window.parent.postMessage({ type: 'ready' }, '*');
+
     //页面加载完成后监听父窗口发送的消息
     window.addEventListener('message', (event) => {
         // if (event.origin !== 'https://projectA.domain') return;
@@ -301,7 +320,7 @@ onUiLoaded(function() {
                 window.parent.postMessage({ type: event.data.value=='before'? 'estimate_before' : 'estimate_value',value:get_compute_estimate() }, '*');
                 break;
             case 'runOK':
-                gradioApp().querySelector('#txt2img_generate').click();
+                gradioApp().querySelector(get_tab_index('tabs')==0?'#txt2img_generate':'#img2img_generate').click();
                 break;
             // 其他指令
         }

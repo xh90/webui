@@ -2108,7 +2108,7 @@
   "Gen Options": "生成选项",
   "Gender of the character": "角色性别",
   "General": "一般设置",
-  "Generate": "生成",
+  "Generate": "生成 (10.00)",
   "Generate .ebs file.(ebsynth project file)": "生成 .ebs 文件。（Ebsynth 工程文件）",
   "Generate 3D inpainted mesh": "生成 3D着色网格",
   "Generate 3D inpainted mesh. (Sloooow, required for generating videos)": "生成优化3D网格 (超慢，用于生成视频)",

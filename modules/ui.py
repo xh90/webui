@@ -210,9 +210,8 @@ def estimate_compute(width, height, batch_size, batch_count):
         "batch_count": batch_count,
     }
     print(f"Estimate compute parameters: {params}")
-    compute = width * height * batch_size * batch_count / (1024 * 768)
-    return [round(compute, 2)]
-
+    compute = width * height * batch_size * batch_count / (50000)
+    return [round(max(compute, 10),2)]
 
 def setup_progressbar(*args, **kwargs):
     pass
@@ -303,7 +302,6 @@ def create_ui():
                 stack.enter_context(gr.Column(variant='compact', elem_id="txt2img_settings"))
 
                 scripts.scripts_txt2img.prepare_ui()
-                compute_info = gr.Number(label='Compute estimate', value=0, interactive=False, visible=False)
                 for category in ordered_ui_categories():
                     if category == "prompt":
                         toprow.create_inline_toprow_prompts()
@@ -321,8 +319,6 @@ def create_ui():
                                 with gr.Column(elem_id="txt2img_column_batch"):
                                     batch_count = gr.Slider(minimum=1, step=1, label='Batch count', value=1, elem_id="txt2img_batch_count")
                                     batch_size = gr.Slider(minimum=1, maximum=8, step=1, label='Batch size', value=1, elem_id="txt2img_batch_size")
-                                    # compute_info = gr.Number(label='Compute estimate', value=0, interactive=False, elem_id="txt2img_compute")
-                                    toprow.attach_compute_info(compute_info)
 
                     elif category == "cfg":
                         with gr.Row():
@@ -371,8 +367,6 @@ def create_ui():
                             with FormRow(elem_id="txt2img_column_batch"):
                                 batch_count = gr.Slider(minimum=1, step=1, label='Batch count', value=1, elem_id="txt2img_batch_count")
                                 batch_size = gr.Slider(minimum=1, maximum=8, step=1, label='Batch size', value=1, elem_id="txt2img_batch_size")
-                                # compute_info = gr.Number(label='Compute estimate', value=0, interactive=False, elem_id="txt2img_compute")
-                                # toprow.attach_compute_info(compute_info)
 
                     elif category == "override_settings":
                         with FormRow(elem_id="txt2img_override_settings_row") as row:
@@ -384,7 +378,8 @@ def create_ui():
 
                     if category not in {"accordions"}:
                         scripts.scripts_txt2img.setup_ui_for_section(category)
-
+                compute_info = gr.Number(label='Compute estimate', value=10, interactive=False, visible=False)
+                toprow.attach_compute_info(compute_info)
             hr_resolution_preview_inputs = [enable_hr, width, height, hr_scale, hr_resize_x, hr_resize_y]
 
             for component in hr_resolution_preview_inputs:
@@ -565,7 +560,6 @@ def create_ui():
                             copy_image_buttons.append((button, name, elem))
 
                 scripts.scripts_img2img.prepare_ui()
-                compute_info2 = gr.Number(label='Compute estimate', value=0, interactive=False, visible=False)
                 for category in ordered_ui_categories():
                     if category == "prompt":
                         toprow.create_inline_toprow_prompts()
@@ -695,8 +689,6 @@ def create_ui():
                                 with gr.Column(elem_id="img2img_column_batch"):
                                     batch_count = gr.Slider(minimum=1, step=1, label='Batch count', value=1, elem_id="img2img_batch_count")
                                     batch_size = gr.Slider(minimum=1, maximum=8, step=1, label='Batch size', value=1, elem_id="img2img_batch_size")
-                                    # compute_info2 = gr.Number(label='Compute estimate', value=0, interactive=False, elem_id="img2img_compute")
-                                    toprow.attach_compute_info(compute_info2)
 
                     elif category == "denoising":
                         denoising_strength = gr.Slider(minimum=0.0, maximum=1.0, step=0.01, label='Denoising strength', value=0.75, elem_id="img2img_denoising_strength")
@@ -750,6 +742,9 @@ def create_ui():
 
                     if category not in {"accordions"}:
                         scripts.scripts_img2img.setup_ui_for_section(category)
+
+                compute_info2 = gr.Number(label='Compute estimate', value=10, interactive=False, visible=False)
+                toprow.attach_compute_info(compute_info2)
 
             # the code below is meant to update the resolution label after the image in the image selection UI has changed.
             # as it is now the event keeps firing continuously for inpaint edits, which ruins the page with constant requests.
