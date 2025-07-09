@@ -66,7 +66,10 @@ function setTitle(progress) {
 
 
 function randomId() {
-    return "task(" + Math.random().toString(36).slice(2, 7) + Math.random().toString(36).slice(2, 7) + Math.random().toString(36).slice(2, 7) + ")";
+    task_id="task(" + Math.random().toString(36).slice(2, 7) + Math.random().toString(36).slice(2, 7) + Math.random().toString(36).slice(2, 7) + ")";
+    window.parent.postMessage({ type: 'estimate_up',prompt_id: task_id, value:get_compute_estimate() }, '*');
+    return task_id;
+
 }
 
 // starts sending progress requests to "/internal/progress" uri, creating progressbar above progressbarContainer element and

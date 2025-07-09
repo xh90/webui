@@ -151,6 +151,7 @@ function submit() {
     showSubmitButtons('txt2img', false);
 
     var id = randomId();
+    console.log("333333333_" + id);
     localSet("txt2img_task_id", id);
 
     requestProgress(id, gradioApp().getElementById('txt2img_gallery_container'), gradioApp().getElementById('txt2img_gallery'), function() {
@@ -178,6 +179,7 @@ function submit_img2img() {
     showSubmitButtons('img2img', false);
 
     var id = randomId();
+    console.log("44444444_" + id);
     localSet("img2img_task_id", id);
 
     requestProgress(id, gradioApp().getElementById('img2img_gallery_container'), gradioApp().getElementById('img2img_gallery'), function() {
@@ -284,7 +286,7 @@ function get_compute_estimate() {
 
 // 发送已完成信号给父窗口
 function sent_is_completed(){
-    window.parent.postMessage({ type: 'estimate_done',value:'' }, '*');
+    window.parent.postMessage({ type: 'estimate_done',prompt_id:localGet(get_tab_index('tabs')==0?'txt2img_task_id':'img2img_task_id') }, '*');
 }
 
 onUiLoaded(function() {
