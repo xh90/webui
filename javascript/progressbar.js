@@ -67,9 +67,15 @@ function setTitle(progress) {
 
 function randomId() {
     task_id="task(" + Math.random().toString(36).slice(2, 7) + Math.random().toString(36).slice(2, 7) + Math.random().toString(36).slice(2, 7) + ")";
-    window.parent.postMessage({ type: 'estimate_up',prompt_id: task_id, value:get_compute_estimate() }, '*');
+    window.parent.postMessage({ type: 'estimate_up',prompt_id: task_id, value:get_compute_estimate() }, '*'); //向上级页面发送估算算力信号
+    const formData = new FormData();
+    formData.append("id_task", task_id);
+    formData.append("callback_url", localGet("callback_url") || "");
+    fetch("https://comfyui.fireai.cn:8180/api/webui/history/init", {
+        method: "POST",
+        body: formData
+    }).catch(err => console.error(err));
     return task_id;
-
 }
 
 // starts sending progress requests to "/internal/progress" uri, creating progressbar above progressbarContainer element and

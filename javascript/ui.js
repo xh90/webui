@@ -151,7 +151,6 @@ function submit() {
     showSubmitButtons('txt2img', false);
 
     var id = randomId();
-    console.log("333333333_" + id);
     localSet("txt2img_task_id", id);
 
     requestProgress(id, gradioApp().getElementById('txt2img_gallery_container'), gradioApp().getElementById('txt2img_gallery'), function() {
@@ -179,7 +178,6 @@ function submit_img2img() {
     showSubmitButtons('img2img', false);
 
     var id = randomId();
-    console.log("44444444_" + id);
     localSet("img2img_task_id", id);
 
     requestProgress(id, gradioApp().getElementById('img2img_gallery_container'), gradioApp().getElementById('img2img_gallery'), function() {
@@ -209,7 +207,6 @@ function submit_extras() {
 
     res[0] = id;
 
-    console.log(res);
     return res;
 }
 
@@ -267,7 +264,6 @@ function setupResolutionPasting(tabname) {
 
 function get_compute_estimate() {
     const button = gradioApp().querySelector(get_tab_index('tabs')==0?'#txt2img_generate':'#img2img_generate');//根据文生图还是图生图判断算力
-    console.log(button.textContent)
     if (!button) {
         console.warn("未找到按钮");
         return 0;
@@ -309,19 +305,16 @@ onUiLoaded(function() {
 
     // 通知父窗口：我准备好了
     window.parent.postMessage({ type: 'ready' }, '*');
-
     //页面加载完成后监听父窗口发送的消息
     window.addEventListener('message', (event) => {
         // if (event.origin !== 'https://projectA.domain') return;
         console.log(event.data)
         switch (event.data.type) {
-            // case 'runOK':
-            //     initializeApp(event.data.data);
-            //     break;
             case 'estimateOK':
                 window.parent.postMessage({ type: event.data.value=='before'? 'estimate_before' : 'estimate_value',value:get_compute_estimate() }, '*');
                 break;
             case 'runOK':
+                localSet("callback_url", event.data.callback_url);
                 gradioApp().querySelector(get_tab_index('tabs')==0?'#txt2img_generate':'#img2img_generate').click();
                 break;
             // 其他指令
