@@ -70,7 +70,7 @@ def wrap_gradio_gpu_call(func, extra_outputs=None):
                     }
 
                     response = requests.post(
-                        "http://comfyui.fireai.cn:8190/api/webui/history",
+                        "https://comfyui.fireai.cn:8180/api/webui/history",
                         data=data,
                         files=image_files,
                         timeout=10

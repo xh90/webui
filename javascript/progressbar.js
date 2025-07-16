@@ -64,12 +64,47 @@ function setTitle(progress) {
     }
 }
 
+function getElemValue(id) {
+    const el = gradioApp().querySelector(`#${id} input, #${id} textarea, #${id} select`);
+    if (!el) {
+        console.warn(`[getElemValue] 未找到元素: #${id}`);
+        return null;
+    }
+    return el.value;
+}
+
+function getCurrentWebUIConfig() {
+    const tab = get_tab_index('tabs') === 0 ? 'txt2img' : 'img2img';
+    const config = {
+        width: getElemValue(`${tab}_width`),
+        height: getElemValue(`${tab}_height`),
+        batch_size: getElemValue(`${tab}_batch_size`),
+        batch_count: getElemValue(`${tab}_batch_count`),
+        steps: getElemValue(`${tab}_steps`),
+        cfg_scale: getElemValue(`${tab}_cfg_scale`),
+        prompt: getElemValue(`${tab}_prompt`),
+        neg_prompt: getElemValue(`${tab}_neg_prompt`),
+        model: opts.sd_model_checkpoint
+    };
+    return config;
+}
+
 
 function randomId() {
     task_id="task(" + Math.random().toString(36).slice(2, 7) + Math.random().toString(36).slice(2, 7) + Math.random().toString(36).slice(2, 7) + ")";
     window.parent.postMessage({ type: 'estimate_up',prompt_id: task_id, value:get_compute_estimate() }, '*'); //向上级页面发送估算算力信号
+    const config = getCurrentWebUIConfig(); // 获取当前参数配置
+    const compute = get_compute_estimate();
+    // 向父页面发送估算算力和当前配置
+    window.parent.postMessage({
+        type: 'estimate_up',
+        prompt_id: task_id,
+        value: compute,
+    }, '*');
+    console.log(config)
     const formData = new FormData();
     formData.append("id_task", task_id);
+    formData.append("config", JSON.stringify(config));
     formData.append("callback_url", localGet("callback_url") || "");
     fetch("https://comfyui.fireai.cn:8180/api/webui/history/init", {
         method: "POST",

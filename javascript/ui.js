@@ -285,31 +285,51 @@ function sent_is_completed(){
     window.parent.postMessage({ type: 'estimate_done',prompt_id:localGet(get_tab_index('tabs')==0?'txt2img_task_id':'img2img_task_id') }, '*');
 }
 
+// 利用原生 value setter，修改后触发 input 事件
+function setElemValue(elemId, value) {
+    const input = gradioApp().querySelector(`#${elemId} input, #${elemId} textarea, #${elemId} select`);
+    if (!input) return;
+
+    const proto =
+        input.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype :
+        input.tagName === 'SELECT'   ? HTMLSelectElement.prototype :
+                                       HTMLInputElement.prototype;
+    const setter = Object.getOwnPropertyDescriptor(proto, 'value').set;
+    setter.call(input, value);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
 onUiLoaded(function() {
     showRestoreProgressButton('txt2img', localGet("txt2img_task_id"));
     showRestoreProgressButton('img2img', localGet("img2img_task_id"));
     setupResolutionPasting('txt2img');
     setupResolutionPasting('img2img');
 
-    // const sliderInput = gradioApp().querySelector('#txt2img_batch_size input');
-    // if (sliderInput) {
-    //     const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-    //     nativeInputValueSetter.call(sliderInput, 0);
-    //     nativeInputValueSetter.call(sliderInput, 1);
-    //     sliderInput.dispatchEvent(new Event('input', { bubbles: true }));
-    //     sliderInput.dispatchEvent(new Event('change', { bubbles: true }));
-    //     // 关键：模拟 release（触发 gr.Slider 的 .release 事件）
-    //     sliderInput.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
-    //     sliderInput.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
-    // }
-
-    // 通知父窗口：我准备好了
+    // 通知父窗口：webui准备好了
     window.parent.postMessage({ type: 'ready' }, '*');
     //页面加载完成后监听父窗口发送的消息
     window.addEventListener('message', (event) => {
         // if (event.origin !== 'https://projectA.domain') return;
         console.log(event.data)
         switch (event.data.type) {
+            case 'openOK': {
+                const cfg = event.data.value || {};
+                const tab = get_tab_index('tabs') === 0 ? 'txt2img' : 'img2img';
+
+                if ('width' in cfg)       setElemValue(`${tab}_width`, cfg.width);
+                if ('height' in cfg)      setElemValue(`${tab}_height`, cfg.height);
+                if ('batch_size' in cfg)  setElemValue(`${tab}_batch_size`, cfg.batch_size);
+                if ('batch_count' in cfg) setElemValue(`${tab}_batch_count`, cfg.batch_count);
+                if ('steps' in cfg)       setElemValue(`${tab}_steps`, cfg.steps);
+                if ('cfg_scale' in cfg)   setElemValue(`${tab}_cfg_scale`, cfg.cfg_scale);
+                if ('prompt' in cfg)      setElemValue(`${tab}_prompt`, cfg.prompt);
+                if ('neg_prompt' in cfg)  setElemValue(`${tab}_neg_prompt`, cfg.neg_prompt);
+
+                // 切换模型
+                if (cfg.model) selectCheckpoint(cfg.model);
+                triggerComputeUpdate(tab);
+                break;
+            }
             case 'estimateOK':
                 window.parent.postMessage({ type: event.data.value=='before'? 'estimate_before' : 'estimate_value',value:get_compute_estimate() }, '*');
                 break;

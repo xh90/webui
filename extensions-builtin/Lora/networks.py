@@ -650,7 +650,7 @@ def network_MultiheadAttention_load_state_dict(self, *args, **kwargs):
 def process_network_files(names: list[str] | None = None):
     # 1. 获取远程 loras 模型列表
     try:
-        resp = requests.get("http://comfyui.fireai.cn:8190/api/models?folder=loras", timeout=10)
+        resp = requests.get("https://comfyui.fireai.cn:8180/api/models?folder=loras", timeout=10)
         resp.raise_for_status()
         remote_files = resp.json().get("files", [])
     except Exception as e:
@@ -669,7 +669,7 @@ def process_network_files(names: list[str] | None = None):
         if name_no_ext in local_names:
             continue
         try:
-            download_url = f"http://comfyui.fireai.cn:8190/api/model?folder=loras&filename={remote_file}"
+            download_url = f"https://comfyui.fireai.cn:8180/api/model?folder=loras&filename={remote_file}"
             save_path = os.path.join(shared.cmd_opts.lora_dir, remote_file)
             with requests.get(download_url, stream=True, timeout=30) as r:
                 r.raise_for_status()
