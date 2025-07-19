@@ -52,7 +52,7 @@ class Toprow:
     def create_classic_toprow(self):
         self.create_prompts()
 
-        with gr.Column(scale=1, elem_id=f"{self.id_part}_actions_column"):
+        with gr.Column(scale=1, elem_id=f"{self.id_part}_actions_column", visible=False):
             self.create_submit_box()
 
             self.create_tools_row()

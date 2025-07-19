@@ -657,8 +657,16 @@ def process_network_files(names: list[str] | None = None):
         print("[LoRA] 网络不可达，跳过远程模型下载")
         remote_files = []
 
+    lora_dirs = [
+        "/ssd2/models/loras",  # 额外加载lora路径
+        shared.cmd_opts.lora_dir
+    ]
+
     # 2. 本地已有模型文件名集合（不含扩展名）
-    local_candidates = list(shared.walk_files(shared.cmd_opts.lora_dir, allowed_extensions=[".pt", ".ckpt", ".safetensors"]))
+    local_candidates = []
+    for lora_dir in lora_dirs:
+        if os.path.exists(lora_dir):
+            local_candidates += list(shared.walk_files(lora_dir, allowed_extensions=[".pt", ".ckpt", ".safetensors"]))
     local_names = {os.path.splitext(os.path.basename(f))[0] for f in local_candidates}
 
     # 3. 下载缺失模型到 shared.cmd_opts.lora_dir
@@ -670,7 +678,7 @@ def process_network_files(names: list[str] | None = None):
             continue
         try:
             download_url = f"https://comfyui.fireai.cn:8180/api/model?folder=loras&filename={remote_file}"
-            save_path = os.path.join(shared.cmd_opts.lora_dir, remote_file)
+            save_path = os.path.join(lora_dirs[0], remote_file)
             with requests.get(download_url, stream=True, timeout=30) as r:
                 r.raise_for_status()
                 os.makedirs(os.path.dirname(save_path), exist_ok=True)
@@ -683,10 +691,13 @@ def process_network_files(names: list[str] | None = None):
             errors.report(f"下载模型失败: {remote_file}", exc_info=True)
 
     # 4. 重新列举包括下载后的本地文件
-    candidates = list(shared.walk_files(shared.cmd_opts.lora_dir, allowed_extensions=[".pt", ".ckpt", ".safetensors"]))
+    candidates = []
+    for lora_dir in lora_dirs:
+        if os.path.exists(lora_dir):
+            candidates += list(shared.walk_files(lora_dir, allowed_extensions=[".pt", ".ckpt", ".safetensors"]))
     candidates += list(shared.walk_files(shared.cmd_opts.lyco_dir_backcompat, allowed_extensions=[".pt", ".ckpt", ".safetensors"]))
 
-    # 5. 正常处理逻辑
+    # 5. 加载每个模型
     for filename in candidates:
         if os.path.isdir(filename):
             continue

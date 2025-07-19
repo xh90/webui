@@ -1160,17 +1160,17 @@ def create_ui():
     interfaces = [
         (txt2img_interface, "txt2img", "txt2img"),
         (img2img_interface, "img2img", "img2img"),
-        (extras_interface, "Extras", "extras"),
-        (pnginfo_interface, "PNG Info", "pnginfo"),
-        (modelmerger_ui.blocks, "Checkpoint Merger", "modelmerger"),
-        (train_interface, "Train", "train"),
+        # (extras_interface, "Extras", "extras"),
+        # (pnginfo_interface, "PNG Info", "pnginfo"),
+        # (modelmerger_ui.blocks, "Checkpoint Merger", "modelmerger"),
+        # (train_interface, "Train", "train"),
     ]
 
     interfaces += script_callbacks.ui_tabs_callback()
     interfaces += [(settings.interface, "Settings", "settings")]
 
     extensions_interface = ui_extensions.create_ui()
-    interfaces += [(extensions_interface, "Extensions", "extensions")]
+    # interfaces += [(extensions_interface, "Extensions", "extensions")]
 
     shared.tab_names = []
     for _interface, label, _ifid in interfaces:
@@ -1193,6 +1193,17 @@ def create_ui():
 
                 if ifid not in ["extensions", "settings"]:
                     loadsave.add_block(interface, ifid)
+            gr.HTML("""
+                <style>
+                /* 隐藏 Settings 标签页（仅隐藏 tab 栏，不隐藏内容） */
+                #tab_settings {
+                    display: none !important;
+                }
+                .tab-nav button:nth-child(3) {
+                    display: none !important;
+                }
+                </style>
+                """)
 
             loadsave.add_component(f"webui/Tabs@{tabs.elem_id}", tabs)
 
